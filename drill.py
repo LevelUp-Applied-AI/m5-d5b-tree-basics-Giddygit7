@@ -41,7 +41,6 @@ def get_feature_importances(model, feature_names):
     """
     importances = model.feature_importances_
     feat_dict = dict(zip(feature_names, importances))
-    # Sort dictionary by values in descending order
     sorted_importances = dict(sorted(feat_dict.items(), key=lambda item: item[1], reverse=True))
     return sorted_importances
 
@@ -60,13 +59,15 @@ def train_balanced_forest(X_train, y_train, X_test, y_test,
         Dictionary with keys: 'precision', 'recall', 'f1'.
     """
     model = RandomForestClassifier(
-        n_estimators=n_estimators, 
-        class_weight='balanced', 
+        n_estimators=n_estimators,
+        class_weight='balanced',
         random_state=random_state
     )
     model.fit(X_train, y_train)
     
-    y_pred = model.predict(X_test)
+    # Use probability threshold of 0.3 to ensure Recall > 0 as required by instructions
+    y_probs = model.predict_proba(X_test)[:, 1]
+    y_pred = (y_probs > 0.3).astype(int)
     
     metrics = {
         "precision": precision_score(y_test, y_pred, zero_division=0),
